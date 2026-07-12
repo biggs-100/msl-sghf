@@ -28,8 +28,8 @@ def main():
 
     BATCH_SIZE = 128
     TEACHER_EPOCHS = 5
-    DISTILL_EPOCHS = 20
-    COMPRESSION = 100.0
+    DISTILL_EPOCHS = 60
+    COMPRESSION = 50.0
 
     # ─── 1. Datos ───
     print_separator("1. MNIST")

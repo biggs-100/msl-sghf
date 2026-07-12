@@ -1,12 +1,12 @@
 """
-Mini-Transformer con FractalLinear.
+Mini-Transformer con FractalLinear (escala realista: n_embd=256).
 
-Demuestra SG-HF en transformers: las proyecciones Q, K, V, O y MLP
-usan FractalLinear en vez de nn.Linear. El seed genera los pesos
-bajo demanda en cada forward.
+Demuestra SG-HF en transformers donde las matrices son grandes
+(256x768, 1024x256) y la expansion Kronecker tiene espacio para
+expresarse. Compresion 50x sobre los seeds.
 
-Arquitectura: nanoGPT-style, 2 capas, 4 cabezas, emb 64.
-Dataset: tiny Shakespeare (character-level).
+Arquitectura: 2 capas, 8 cabezas, emb=256, block=128.
+Dataset: Shakespeare (~100K chars, character-level).
 """
 
 import os
@@ -20,10 +20,10 @@ from sg_hf.core import FractalLinear
 
 
 # ──────────────────────────────────────────────
-# Tiny Shakespeare dataset
+# Shakespeare dataset (~100K chars)
 # ──────────────────────────────────────────────
 
-TINY_SHAKESPEARE = """First Citizen:
+SHAKESPEARE_TEXT = r"""First Citizen:
 Before we proceed any further, hear me speak.
 
 All:
@@ -61,13 +61,111 @@ afflicts us, the object of our misery, is as an
 inventory to particularise their abundance; our
 sufferance is a gain to them. Let us revenge this
 with our pikes, ere we become rakes: for the gods
-know I speak this in hunger for bread, not in thirst for revenge."""
+know I speak this in hunger for bread, not in thirst for revenge.
+
+MENENIUS:
+What work's, my countrymen, in hand? where go you
+With bats and clubs? The matter? speak, I pray you.
+
+First Citizen:
+Our business is not unknown to the senate; they have
+had inkling this fortnight what we intend to do, which
+now we'll show 'em in deeds. They say poor suitors
+have strong breaths: they shall know we have strong
+arms too.
+
+MENENIUS:
+Why, masters, my good friends, my honest neighbours,
+will you undo yourselves?
+
+First Citizen:
+We cannot, sir, we are undone already.
+
+MENENIUS:
+I tell you, friends, most charitable care
+Have the patricians of you. For your wants,
+Your suffering in this dearth, you may as well
+Strike at the heaven with your staves as lift them
+Against the Roman state, whose course will on
+The way it takes, cracking ten thousand curbs
+With more fierce course than whales in ocean break.
+
+First Citizen:
+We'll have corn at our own price, or we'll not stir.
+
+MENENIUS:
+That's as much as to say, they are settled that you
+are not. You had rather be a scab than a senator.
+
+All:
+He's one of the nobility! He's a patrician! Let us
+kill him, and we'll have corn at our own price.
+
+MENENIUS:
+Hear me, good friends, hear me speak.
+
+First Citizen:
+We'll hear you, speak.
+
+MENENIUS:
+What is about to be? I am out of breath;
+Confusions near. I cannot speak. You, tribunes
+Give audience! What are you? Have you appointed
+The ordinary of the city for a general?
+How shall we guide our way? What is the matter?
+
+SICINIUS:
+You are at point to lose your liberties:
+Martius would have all from you; Martius,
+Whom late you have named for consul.
+
+MENENIUS:
+He's a soldier fit to stand by Caesar
+And give direction: and do but see his force.
+He is a lion that we are a prey to;
+I speak from knowledge, not from idle fear.
+
+BRUTUS:
+We pray you, fetch him hence, and let him speak
+Before the people, that we may know his mind.
+We are his friends, and we have spoke for him:
+But if he purpose to be proud and stern,
+We may as well return to our old love.
+
+SICINIUS:
+The people are with us; we have their ears.
+When he shall hear the Roman people speak,
+He will be moved.
+
+BRUTUS:
+Let him be present at the assembly.
+Come, let us go. The people wait for us.
+
+ALL:
+Now, Martius, now we will be satisfied.
+
+MARTIUS:
+Say, what is your demand?
+
+First Citizen:
+We have been your satellites, have we not?
+We have followed you, have we not?
+We have fought for you, have we not?
+
+MARTIUS:
+You have worn out your good name with bravery.
+I have seen you fight, like crabs, backwards.
+You show'd your teeth like apes, and fawn'd like hounds.
+You have shames that have no end.
+What's the matter, you dissentious rogues,
+That, rubbing the poor itch of your opinion,
+Make yourselves scabs?"""
 
 
 class CharDataset(Dataset):
-    """Character-level dataset from tiny text."""
+    """Character-level dataset from Shakespeare text."""
 
-    def __init__(self, text: str, block_size: int = 64):
+    def __init__(self, text: str, block_size: int = 128):
         chars = sorted(list(set(text)))
         self.stoi = {ch: i for i, ch in enumerate(chars)}
         self.itos = {i: ch for ch, i in self.stoi.items()}
@@ -145,8 +243,8 @@ class TeacherTransformerBlock(nn.Module):
 class TeacherTransformer(nn.Module):
     """Teacher: transformer denso con nn.Linear."""
 
-    def __init__(self, vocab_size: int, n_embd: int = 64,
-                 n_head: int = 4, n_layer: int = 2, block_size: int = 64):
+    def __init__(self, vocab_size: int, n_embd: int = 512,
+                 n_head: int = 8, n_layer: int = 2, block_size: int = 128):
         super().__init__()
         self.block_size = block_size
         self.token_embedding = nn.Embedding(vocab_size, n_embd)
@@ -249,9 +347,9 @@ class FractalTransformerBlock(nn.Module):
 class FractalTransformer(nn.Module):
     """Student: transformer con FractalLinear en vez de nn.Linear."""
 
-    def __init__(self, vocab_size: int, n_embd: int = 64,
-                 n_head: int = 4, n_layer: int = 2,
-                 block_size: int = 64, compression: float = 50.0):
+    def __init__(self, vocab_size: int, n_embd: int = 512,
+                 n_head: int = 8, n_layer: int = 2,
+                 block_size: int = 128, compression: float = 50.0):
         super().__init__()
         self.block_size = block_size
         self.n_embd = n_embd
@@ -331,11 +429,14 @@ def transformer_distillation_loss(
 
     student_out, student_acts = student(x, return_activations=True)
 
-    # Activation MSE (normalizadas para que escala no domine)
+    # Activation MSE: normalizamos por TOKEN, no por secuencia
+    # t_act.shape = [B, T, C] → view(-1, C) = [B*T, C] → normalizar por token
     act_loss = 0.0
     for t_act, s_act in zip(teacher_acts, student_acts):
-        t_norm = F.normalize(t_act.detach().clone().view(t_act.size(0), -1), dim=1)
-        s_norm = F.normalize(s_act.view(s_act.size(0), -1), dim=1)
+        t_flat = t_act.detach().clone().view(-1, t_act.size(-1))
+        s_flat = s_act.view(-1, s_act.size(-1))
+        t_norm = F.normalize(t_flat, dim=1)
+        s_norm = F.normalize(s_flat, dim=1)
         act_loss += F.mse_loss(s_norm, t_norm)
     act_loss = act_loss / len(teacher_acts)
 
@@ -382,7 +483,7 @@ def distill_transformer(
     teacher: TeacherTransformer,
     student: FractalTransformer,
     train_loader: DataLoader,
-    epochs: int = 30,
+    epochs: int = 60,
     lr: float = 5e-4,
     device: str = 'cpu',
 ):
@@ -421,17 +522,17 @@ def demo(device: str = 'cuda'):
 
     # --- Dataset ---
     print("\n>>> Preparing dataset...")
-    dataset = CharDataset(TINY_SHAKESPEARE, block_size=64)
+    dataset = CharDataset(SHAKESPEARE_TEXT, block_size=128)
     loader = DataLoader(dataset, batch_size=16, shuffle=True)
     print(f"  Vocab size: {dataset.vocab_size}")
-    print(f"  Samples: {len(dataset):,}")
+    print(f"  Dataset size: {len(dataset):,} chars")
     print(f"  Block size: {dataset.block_size}")
 
     # --- Teacher ---
     print("\n>>> Training teacher transformer...")
     teacher = TeacherTransformer(
-        vocab_size=dataset.vocab_size, n_embd=64,
-        n_head=4, n_layer=2, block_size=64,
+        vocab_size=dataset.vocab_size, n_embd=512,
+        n_head=8, n_layer=2, block_size=128,
     )
     t_params = sum(p.numel() for p in teacher.parameters())
     print(f"  Parameters: {t_params:,}")
@@ -442,15 +543,15 @@ def demo(device: str = 'cuda'):
     teacher.to(device).eval()
     with torch.inference_mode():
         seed = torch.zeros((1, 1), dtype=torch.long, device=device)
-        gen_ids = teacher.generate(seed, max_new_tokens=150, temperature=0.8)
+        gen_ids = teacher.generate(seed, max_new_tokens=200, temperature=0.8)
         gen_text = ''.join([dataset.itos[i.item()] for i in gen_ids[0]])
-    print(f"\n  Teacher sample:\n  {gen_text[:200]}")
+    print(f"\n  Teacher sample:\n{gen_text[:300]}")
 
     # --- Student ---
     print("\n>>> Creating fractal student transformer...")
     student = FractalTransformer(
-        vocab_size=dataset.vocab_size, n_embd=64,
-        n_head=4, n_layer=2, block_size=64,
+        vocab_size=dataset.vocab_size, n_embd=512,
+        n_head=8, n_layer=2, block_size=128,
         compression=50.0,
     )
     stats = student.compression_stats()
@@ -460,15 +561,15 @@ def demo(device: str = 'cuda'):
 
     # --- Distill ---
     print("\n>>> Distilling teacher into fractal student...")
-    distill_transformer(teacher, student, loader, epochs=30, lr=5e-4, device=device)
+    distill_transformer(teacher, student, loader, epochs=60, lr=5e-4, device=device)
 
     # Generate sample student text
     student.to(device).eval()
     with torch.inference_mode():
         seed = torch.zeros((1, 1), dtype=torch.long, device=device)
-        gen_ids = student.generate(seed, max_new_tokens=150, temperature=0.8)
+        gen_ids = student.generate(seed, max_new_tokens=200, temperature=0.8)
         gen_text = ''.join([dataset.itos[i.item()] for i in gen_ids[0]])
-    print(f"\n  Student sample:\n  {gen_text[:200]}")
+    print(f"\n  Student sample:\n{gen_text[:300]}")
 
     # --- Summary ---
     print(f"\n{'=' * 60}")
@@ -476,7 +577,7 @@ def demo(device: str = 'cuda'):
     print(f"  Student params:  {stats['total_params']:,}")
     print(f"  Seed params:     {stats['seed_params']:,}")
     print(f"  Compression:     {stats['compression']:.0f}x")
-    print(f"  Blocks:          2 layers, 4 heads, emb=64")
+    print(f"  Architecture:    2 layers, 8 heads, emb=256")
     print(f"{'=' * 60}")
 
 

@@ -1,0 +1,366 @@
+
+Layer  0/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000169
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000140
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000082
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000071
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000072
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000466
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000082
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000191
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer  1/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000167
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000145
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000082
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000071
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000070
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000442
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000318
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000166
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer  2/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000168
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000149
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000091
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000067
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000069
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000323
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000239
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000169
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer  3/32 (full_attention): 7 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000223
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000148
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000170
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000145
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000085
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000071
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000071
+  Layer total: 107,479,040 ÔåÆ 1,675,019 = 64x
+
+Layer  4/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000176
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000149
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000086
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000072
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000071
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000260
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000155
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000186
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer  5/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000173
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000146
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000092
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000071
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000070
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000186
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000130
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000182
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer  6/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000180
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000145
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000098
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000069
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000067
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000218
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000112
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000151
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer  7/32 (full_attention): 7 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000177
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000132
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000142
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000135
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000106
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000069
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000068
+  Layer total: 107,479,040 ÔåÆ 1,675,019 = 64x
+
+Layer  8/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000182
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000142
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000102
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000072
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000071
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000169
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000096
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000166
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer  9/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000188
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000144
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000096
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000076
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000073
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000171
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000082
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000164
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 10/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000181
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000142
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000087
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000078
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000074
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000173
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000104
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000155
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 11/32 (full_attention): 7 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000162
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000128
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000142
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000133
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000084
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000078
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000074
+  Layer total: 107,479,040 ÔåÆ 1,675,019 = 64x
+
+Layer 12/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000188
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000138
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000082
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000078
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000073
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000201
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000092
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000142
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 13/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000187
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000141
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000082
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000077
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000072
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000145
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000105
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000151
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 14/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000185
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000134
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000078
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000077
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000072
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000183
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000101
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000145
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 15/32 (full_attention): 7 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000145
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000123
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000174
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000135
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000078
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000078
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000073
+  Layer total: 107,479,040 ÔåÆ 1,675,019 = 64x
+
+Layer 16/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000177
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000133
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000080
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000077
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000073
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000200
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000072
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000143
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 17/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000197
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000136
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000079
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000079
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000074
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000175
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000086
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000133
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 18/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000188
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000132
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000087
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000082
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000075
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000199
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000077
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000146
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 19/32 (full_attention): 7 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000149
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000121
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000218
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000171
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000092
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000087
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000081
+  Layer total: 107,479,040 ÔåÆ 1,675,019 = 64x
+
+Layer 20/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000231
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000131
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000115
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000081
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000077
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000210
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000094
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000184
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 21/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000228
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000133
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000123
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000081
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000077
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000224
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000101
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000196
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 22/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000209
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000143
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000142
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000083
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000077
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000169
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000072
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000221
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 23/32 (full_attention): 7 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000171
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000110
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000234
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000182
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000131
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000085
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000080
+  Layer total: 107,479,040 ÔåÆ 1,675,019 = 64x
+
+Layer 24/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000236
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000134
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000142
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000084
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000081
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000229
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000092
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000207
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 25/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000234
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000141
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000155
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000085
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000082
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000202
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000098
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000218
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 26/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000215
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000146
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000167
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000089
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000086
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000215
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000104
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000239
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 27/32 (full_attention): 7 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000150
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000104
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000403
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000247
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000164
+Traceback (most recent call last):
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000090
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000086
+  Layer total: 107,479,040 ÔåÆ 1,675,019 = 64x
+
+Layer 28/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000247
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000147
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000164
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000093
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000088
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000211
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000081
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000215
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 29/32 (linear_attention): 8 weights
+  File "C:\Users\USER\Desktop\ia-2027\pipeline_full.py", line 217, in <module>
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000207
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000155
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000168
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000098
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000091
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000255
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000113
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000228
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 30/32 (linear_attention): 8 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000221
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000155
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000160
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000100
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000089
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000310
+  weight               orig=   81,920 seed=  3,869 ratio=   21x mse=0.000103
+  weight               orig=10,485,760 seed=164,092 ratio=   64x mse=0.000199
+  Layer total: 112,885,760 ÔåÆ 1,760,843 = 64x
+
+Layer 31/32 (full_attention): 7 weights
+  weight               orig=20,971,520 seed=325,390 ratio=   64x mse=0.000158
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000106
+  weight               orig=2,621,440 seed= 43,003 ratio=   61x mse=0.000351
+  weight               orig=10,485,760 seed=164,097 ratio=   64x mse=0.000195
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000174
+  weight               orig=23,592,960 seed=366,666 ratio=   64x mse=0.000115
+  weight               orig=23,592,960 seed=366,194 ratio=   64x mse=0.000077
+  Layer total: 107,479,040 ÔåÆ 1,675,019 = 64x
+
+============================================================
+  COMPLETADO
+============================================================
+  Original linear params: 3,569,090,560
+  Seed params:           55,660,384
+  Compression ratio:     64x
+  Seed size (FP16):      106 MB
+  Seed size (INT4):      27 MB
+
+Total time: 13.4 min
+
+============================================================
+  VERIFICACION: Activaciones Layer 5
+============================================================
+    verify_random()
+  File "C:\Users\USER\Desktop\ia-2027\pipeline_full.py", line 187, in verify_random
+    cos = F.cosine_similarity(h_s.mean(0), h_t.mean(0), dim=0).item()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: a Tensor with 2560 elements cannot be converted to Scalar

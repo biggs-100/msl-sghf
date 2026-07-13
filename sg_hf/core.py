@@ -114,6 +114,96 @@ class FractalLinear(nn.Module):
                 f'compression={self.compression_ratio:.1f}x')
 
 
+class SharedSeedMLP(nn.Module):
+    """
+    MLP con seed COMPARTIDO entre gate_proj y up_proj.
+
+    En vez de dos seeds independientes (que hace que el error en gate
+    se multiplique con up), usa UN seed que genera ambas matrices.
+
+    Forward:
+      1. Seed → FFT → modulación → IFFT (holograma compartido)
+      2. Expansión Kronecker con heads separados para gate y up:
+           W_gate = expand(seed, row_gate, col_gate)
+           W_up   = expand(seed, row_up, col_up)
+      3. MLP: y = SiLU(x @ W_gate) * (x @ W_up)
+      4. down_proj (FractalLinear aparte o Linear normal)
+    """
+
+    def __init__(self, hidden_size: int = 2560, intermediate_size: int = 9216,
+                 compression: float = 100.0, fractal_down: bool = True):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.intermediate_size = intermediate_size
+
+        # Tamaño del seed compartido
+        total_params = hidden_size * intermediate_size
+        seed_target = max(4, int(total_params / compression))
+        p = max(2, min(int(math.sqrt(seed_target)), hidden_size))
+        q = max(2, seed_target // p)
+        q = min(q, hidden_size)
+        self.p, self.q = p, q
+
+        # Factores de expansión
+        self.a = math.ceil(intermediate_size / p)
+        self.b = math.ceil(hidden_size / q)
+
+        # Seed compartido + modulación FFT
+        # Inicializacion corregida: Kronecker triplica varianza
+        self.seed = nn.Parameter(torch.randn(p, q) * 0.5)
+        fft_h, fft_w = p, q // 2 + 1
+        self.freq_scale = nn.Parameter(torch.ones(fft_h, fft_w) * 0.1)
+        self.freq_shift = nn.Parameter(torch.zeros(fft_h, fft_w))
+
+        # Bases de expansión — SEPARADAS para gate y up
+        # (mismo seed, distinto head)
+        self.row_gate = nn.Parameter(torch.randn(p, self.a) * 0.05)
+        self.col_gate = nn.Parameter(torch.randn(q, self.b) * 0.05)
+        self.row_up = nn.Parameter(torch.randn(p, self.a) * 0.05)
+        self.col_up = nn.Parameter(torch.randn(q, self.b) * 0.05)
+
+        # Down projection
+        if fractal_down:
+            self.down = FractalLinear(intermediate_size, hidden_size,
+                                      compression=compression)
+        else:
+            self.down = nn.Linear(intermediate_size, hidden_size)
+
+    def _generate_gate_up(self):
+        """Genera W_gate y W_up desde el seed compartido."""
+        p, q, a, b = self.p, self.q, self.a, self.b
+
+        # FFT → modulación → IFFT (seed compartido)
+        seed_fft = torch.fft.rfft2(self.seed)
+        scale = torch.sigmoid(self.freq_scale)
+        seed_mod = seed_fft * (1.0 + scale) + self.freq_shift
+        z = torch.fft.irfft2(seed_mod, s=(p, q))  # (p, q)
+
+        # Expansión Kronecker — gate
+        W_g = torch.einsum('pq,pa,qb->paqb', z, self.row_gate, self.col_gate)
+        W_g = W_g.reshape(p * a, q * b)[:self.intermediate_size, :self.hidden_size]
+
+        # Expansión Kronecker — up (mismo z, distintas bases)
+        W_u = torch.einsum('pq,pa,qb->paqb', z, self.row_up, self.col_up)
+        W_u = W_u.reshape(p * a, q * b)[:self.intermediate_size, :self.hidden_size]
+
+        return W_g, W_u
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        W_g, W_u = self._generate_gate_up()
+        gate = F.silu(x @ W_g.T)
+        up = x @ W_u.T
+        hidden = gate * up
+        return self.down(hidden)
+
+    def seed_params_count(self) -> int:
+        """Parámetros totales del seed compartido + heads."""
+        return (self.p * self.q +                    # seed
+                self.p * (self.q // 2 + 1) * 2 +     # freq scale+shift
+                self.p * self.a * 4 +                # row_gate + col_gate + row_up + col_up
+                self.q * self.b * 4)                 # (bases son p×a y q×b)
+
+
 class FractalMLP(nn.Module):
     """
     MLP donde cada capa lineal es FractalLinear.

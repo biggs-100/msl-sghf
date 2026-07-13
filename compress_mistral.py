@@ -31,16 +31,20 @@ print()
 total_orig = 0
 total_seed = 0
 
-for idx, key in enumerate(linear_keys):
+def compress_one(key):
+    """Comprime un solo peso. Todo se limpi al salir de esta funcion."""
     with safe_open(CONSOLIDATED, framework='pt', device='cpu') as f:
-        weight = f.get_tensor(key).float().to(device)
+        weight = f.get_tensor(key).float()
 
     out_f, in_f = weight.shape
     orig = weight.numel()
-    print(f"[{idx+1}/{len(linear_keys)}] {key.split('.')[-3]}.{key.split('.')[-2]}: {list(weight.shape)} = {orig:,} params")
 
-    fl = FractalLinear(in_f, out_f, compression=COMPRESSION).to(device)
+    fl = FractalLinear(in_f, out_f, compression=COMPRESSION)
     opt = torch.optim.Adam(list(fl.parameters()), lr=1e-2)
+
+    if device == 'cuda':
+        weight = weight.cuda()
+        fl = fl.cuda()
 
     best = float('inf')
     for step in range(300):
@@ -53,18 +57,20 @@ for idx, key in enumerate(linear_keys):
             best = loss.item()
 
     safe_name = key.replace('.', '_').replace('/', '_')
-    torch.save(fl.state_dict(), os.path.join(SEED_DIR, f'{safe_name}.pt'))
+    torch.save(fl.cpu().state_dict(), os.path.join(SEED_DIR, f'{safe_name}.pt'))
 
-    seed_p = fl.total_compressed
+    return orig, fl.total_compressed, best
+
+# ─── Loop principal ───
+for idx, key in enumerate(linear_keys):
+    short = key.split('.')[-3] + '.' + key.split('.')[-2]
+    print(f"[{idx+1}/{len(linear_keys)}] {short}...", end=' ', flush=True)
+    
+    orig, seed_p, best = compress_one(key)
     ratio = orig / seed_p
     total_orig += orig
     total_seed += seed_p
-
-    print(f"  MSE: {best:.6f} | {ratio:.0f}x | Seed: {seed_p:,} params")
-
-    del fl, weight
-    if device == 'cuda':
-        torch.cuda.empty_cache()
+    print(f"MSE={best:.6f} | {ratio:.0f}x | Seed={seed_p:,}")
 
 print(f"\n{'='*50}")
 print(f"COMPRESION COMPLETA")

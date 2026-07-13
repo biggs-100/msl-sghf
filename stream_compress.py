@@ -93,11 +93,23 @@ def stream_compress(model_path, layer_pattern=None):
         for step in range(steps):
             opt.zero_grad()
             W_gen = fl._generate_weight()
-            loss = F.mse_loss(W_gen, weight)
+            
+            # Loss principal: MSE de pesos
+            mse_loss = F.mse_loss(W_gen, weight)
+            
+            # Sign flip penalty: evita que el gate invierta neuronas
+            # (el error en SiLU gate se amplifica si el signo cambia)
+            sign_flips = torch.mean(
+                (torch.sign(W_gen) != torch.sign(weight)).float()
+            )
+            
+            loss = mse_loss + 0.01 * sign_flips
             loss.backward()
             opt.step()
+            
             if loss.item() < best_loss:
                 best_loss = loss.item()
+                best_sign_flips = sign_flips.item()
         
         elapsed = time.perf_counter() - t0
         

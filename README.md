@@ -1,136 +1,56 @@
-# SG-HF: Seed-Generated Fractal Weight Synthesis
+# MSL + SG-HF
 
-**Compresión 64× de modelos de IA — pesos generados bajo demanda desde un seed.**
+**Multi-Scale Linear layer** and **Seed-Generated Fractal Weight compression** for LLMs.
 
----
+## What is this?
 
-## ¿Qué es SG-HF?
+Two complementary inventions for extreme compression of neural networks:
 
-SG-HF (**S**ynthetic **G**enerative weight synthesis via **H**olographic **F**ractal expansion) es un método que comprime los pesos de redes neuronales almacenando un **seed** que los genera en tiempo real, en vez de almacenar los pesos directamente.
-
-| Enfoque tradicional | SG-HF |
-|---|---|
-| Almacena W (23M floats por capa) | Almacena seed (235K floats) |
-| Lee W de memoria para inferencia | Genera W desde seed vía FFT + Kronecker |
-| 140 GB para un modelo 70B | **2.2 GB de seeds** |
-| No corre en laptop | **Corre en laptop 8GB VRAM** |
-
-## Resultados
-
-### Qwen3.5-4B (modelo real de producción)
-
-| Métrica | Teacher | SG-HF |
-|---|---|---|
-| Parámetros lineales | 3,569M | 55.7M seeds |
-| Compresión | — | **64×** |
-| Weight MSE | — | **0.00007** |
-| Seed size (FP16) | — | **106 MB** |
-| Seed size (INT4) | — | **27 MB** |
-| Capas comprimidas | — | **32/32** |
-
-### distilgpt2
-
-| Métrica | Teacher | SG-HF |
-|---|---|---|
-| Parámetros lineales | ~42M | 847K seeds |
-| Compresión | — | **97×** |
-
-### MNIST MLP
-
-| Métrica | Teacher | SG-HF |
-|---|---|---|
-| Parámetros | 535K | 27K |
-| Accuracy | 97.4% | **96.0%** |
-| Compresión | — | **50×** |
-
-## Arquitectura
+### MSL (Multi-Scale Linear)
+A drop-in replacement for `nn.Linear` that factorizes W = U · diag(s) · V^T into hierarchical scales. By truncating the last scales at inference time, you get a smaller model that works **WITHOUT fine-tuning**. The student is born from the teacher.
 
 ```
-Seed (106 MB FP16)
-  │
-  ├── FFT ── modulación ── IFFT  (dominio holográfico)
-  │
-  ├── Expansión Kronecker (gate_proj)
-  ├── Expansión Kronecker (up_proj)
-  ├── Expansión Kronecker (down_proj)
-  ├── Expansión Kronecker (Q, K, V, O projections)
-  │
-  └── Pesos generados → inferencia → se descartan
+Model trained with MSL → truncate last scales → smaller model, same quality (gap ~0)
 ```
 
-### Componentes
+### SG-HF (Seed-Generated Fractal Weights)
+Compression via seeds that generate weights under demand:
+- **Kronecker expansion**: 50-100× on weights with std > 0.01
+- **Ternary quantization** {-1, 0, +1}: 16× on all modern LLMs (Mistral, Llama, Qwen)
 
-- **FractalLinear** (`sg_hf/core.py`): genera una matriz W desde un seed vía FFT + Kronecker
-- **SharedSeedMLP** (`sg_hf/core.py`): genera gate y up desde el mismo seed (preserva la relación)
-- **MLA** (`sg_hf/mla.py`): comprime el KV cache 16× via latentes
-- **Teacher + Distill** (`sg_hf/teacher.py`, `sg_hf/distill.py`): entrena seeds desde teacher
-
-## Pipeline
-
-```bash
-# 1. Comprimir modelo completo
-python pipeline_full.py        # Qwen3.5-4B completo (13 min en GPU)
-
-# 2. Destilar MLP outputs (requiere GPU 8GB+)
-python distill_mlp.py          # Corrige amplificación del gate SiLU
-
-# 3. Probar inferencia
-python test_inference.py       # Compara texto generado
-
-# 4. Visualizar resultados
-python -m sg_hf.viz            # Genera gráficos en output/
+### The full pipeline
+```
+Teacher (Mistral, Llama) → Distill to MSL → Kronecker on MSL factors → Truncatable student
 ```
 
-## Archivos del proyecto
+## Repository structure
 
 ```
-ia-2027/
-├── sg_hf/
-│   ├── core.py          # FractalLinear, SharedSeedMLP
-│   ├── mla.py           # Multi-head Latent Attention
-│   ├── distill.py       # Destilación por activaciones
-│   ├── teacher.py       # Teacher MLP + MNIST
-│   ├── transformer.py   # Transformer fractal
-│   ├── real_gpt.py      # distilgpt2: 97× compression
-│   ├── viz.py           # Visualizaciones
-│   └── demo.py          # Demo MNIST
-├── compress_qwen.py     # Qwen3.5-4B compression por capa
-├── pipeline_full.py     # Pipeline completo (32 capas)
-├── distill_mlp.py       # Destilación MLP output
-├── test_inference.py    # Test de inferencia
-├── WHITEPAPER.md        # Documento técnico completo
-├── pipeline_output.txt  # Resultados de la corrida
-└── compressed_qwen_full/ # Seeds guardados (106 MB)
+sg_hf/
+├── msl_v2.py              # MSL layer implementation
+├── msl_transformer.py     # GPT with MSL layers
+├── core.py                # FractalLinear (SG-HF Kronecker)
+
+msl_demo_v2.py             # MNIST demo
+msl_demo_transformer.py    # GPT demo
+kaggle_msl_distill.py      # Kaggle notebook (distill TinyLlama → MSL)
+WHITEPAPER.md              # Full documentation
 ```
 
-## Combinación con MLA
+## Key results
 
-SG-HF + MLA resuelve los dos cuellos de botella:
+| Experiment | Teacher | Student (truncated) | Gap |
+|-----------|---------|-------------------|-----|
+| MNIST MLP | 97.74% | 94.88% @ 21× | 2.86pp |
+| GPT (864K) | loss 0.53 | loss 0.53 @ 7× | ~0 |
+| Mistral-7B ternary | — | COS 0.77 @ 16× | — |
 
-| Componente | Problema | Solución SG-HF+MLA |
-|---|---|---|
-| Pesos | Ocupan 8-140 GB | **Seed 64× más chico** |
-| KV cache | Crece con el contexto | **Latente 16× más chico** |
+## Limitations
 
-**Resultado: modelo 64× chico + 1M tokens de contexto en laptop 8GB VRAM.**
+- **No post-hoc compression >16×** on modern LLMs. Weights have std ~0.003 and flat spectrum.
+- **MSL requires training from scratch.** Can't apply to existing models without distillation.
+- **Full pipeline (distill → MSL → Kronecker) needs scale.** ~100B tokens for production quality 7B model.
 
-## Estado del proyecto
+## License
 
-- ✅ Concepto validado (MLP MNIST, distilgpt2, Qwen3.5-4B)
-- ✅ Compresión 64× de Qwen3.5-4B completo
-- ✅ MLA implementado y probado
-- ✅ Whitepaper completo
-- ⏳ Destilación MLP output (requiere GPU 8GB+)
-- ⏳ Inferencia completa con generación de texto
-
-## Próximos pasos
-
-1. Correr `distill_mlp.py` y `test_inference.py` en GPU 8GB+
-2. Integrar SharedSeedMLP en el pipeline completo
-3. Probar en modelo MoE (Hy3, GLM-5.2)
-4. FPGA accelerator design
-5. Patente / inversores
-
----
-
-*Proyecto desarrollado como parte del whitepaper SG-HF. Julio 2026.*
+MIT

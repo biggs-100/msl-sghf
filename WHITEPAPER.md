@@ -1,244 +1,216 @@
-# SG-HF: Seed-Generated Fractal Weight Synthesis
+# MSL + SG-HF: Compresion Extrema y Destilacion Sin Reentrenar
 
-## Generative Weight Compression for Frontier AI Models
+## Resumen
 
-**July 2026 (v2 — Updated with Mistral-7B validation)**
+Presentamos dos inventos complementarios y el pipeline que los une para lograr compresion 50-100x de modelos de lenguaje sin reentrenar el alumno.
 
----
+- **MSL (Multi-Scale Linear):** Una nueva capa que reemplaza la capa lineal densa. Factoriza W = U·diag(s)·V^T por escalas jerarquicas. Al truncar las ultimas escalas, se obtiene un modelo mas chico que funciona SIN reentrenar. El alumno nace del profesor.
 
-## Abstract
+- **SG-HF (Seed-Generated Fractal Weights):** Compresion post-hoc via semillas que generan pesos bajo demanda. Dos sabores: expansion Kronecker (50-100x en pesos con std > 0.01) y ternario {-1,0,+1} (16x en pesos con std < 0.01).
 
-We present **SG-HF (Synthetic Generative Weight Synthesis via Holographic Fractal Expansion)** and its hybrid extension **SG-HF + Ternary Quantization**, a system that compresses neural network weights by **10–16×** on modern LLMs while preserving model quality. 
-
-Instead of storing weight matrices, SG-HF stores a small **seed** and generates weights on-demand using Kronecker expansion with FFT modulation. We discovered a fundamental limitation: Kronecker decomposition fails on **SiLU-gated projections** (w1/w3 in SwiGLU MLPs) because it forces row co-linearity within blocks, contradicting the diversity required by gate neurons. We solve this with **ternary quantization {-1,0,+1} + per-row scale**, which introduces element-independent noise that SiLU tolerates well.
-
-When combined with Multi-head Latent Attention (MLA) for 16× KV cache compression, the system enables **frontier MoE models (~52B) to run on consumer laptops** — a capability currently exclusive to server clusters.
-
-**Key result:** Mistral-7B compressed from 26 GB (FP32) to **1.67 GB (16×)** with MLP output cosine similarity of **0.77** and attention similarity of **0.89**, using zero training data.
+- **Pipeline completo:** Destilar un modelo existente (teacher) a una arquitectura MSL, comprimir los factores con Kronecker, y distribuir solo la semilla. El usuario final puede truncar el modelo sin reentrenar para adaptarlo a su hardware.
 
 ---
 
-## 1. The Problem: Model Growth Outpaces Hardware
+## 1. El Problema
 
-| Metric | 2022 (GPT-3) | 2024 (Llama-3) | 2026 (Hy3, GLM-5.2) |
-|---|---|---|---|
-| Parameters | 175B | 405B | 753B |
-| Weight size (FP16) | 350 GB | 810 GB | 1.5 TB |
-| Consumer GPU VRAM | 12 GB | 16 GB | 24 GB |
-| Gap | 29× | 51× | 63× |
+Los LLMs modernos (Mistral, Llama-3, Qwen, DeepSeek) tienen pesos con dos propiedades que los hacen casi incompresibles post-hoc:
 
-The gap between model size and available hardware grows every year. Current compression methods — quantization (INT4/INT8), pruning, and distillation — provide 2–8× compression at best.
+1. **std ~ 0.003:** La magnitud de los pesos es extremadamente pequena.
+2. **Espectro de valores singulares plano:** La informacion esta distribuida uniformemente en todas las direcciones. No hay componentes principales.
 
-SG-HF takes a fundamentally different approach: **do not store weights — generate them.**
+Cualquier tecnica de bajo rango (SVD truncado, Kronecker, tensor train) pierde una fraccion enorme de la senal porque el error de aproximacion es comparable a la senal misma.
+
+**Unico metodo que funciona sin reentrenar:** cuantizacion ternaria {-1,0,+1}, porque preserva el rango completo y el error incoherente por elemento es tolerado por la no-linealidad SiLU. Pero su limite es ~16x.
 
 ---
 
-## 2. SG-HF: Generating Weights from a Seed
+## 2. SG-HF: Compresion por Semillas
 
-### Core Insight
+### 2.1 Expansion Kronecker
 
-Neural network weights are not random data. They have an intrinsic dimensionality far lower than their apparent size. However, **not all weight types compress equally** — we discovered a critical distinction.
-
-### Kronecker Decomposition Method
-
-For each weight matrix W ∈ ℝ^{M×N}, we store a seed S ∈ ℝ^{p×q} that is 50–400× smaller than W. We generate W on-demand via:
-
-1. **FFT Modulation** — transform the seed to the frequency domain, apply learnable filters, and return to the time domain.
-2. **Kronecker Expansion** — each element S[i,j] expands into a rank-1 block R[i] ⊗ C[j] via learned basis vectors.
-3. **On-demand Generation** — weights are generated at inference time per layer and discarded after use.
-
-This structure works by dividing the matrix into p×q blocks, each of size a×b. The seed captures the "DC" component (block means), while the Kronecker bases capture intra-block structure.
-
-### Discovered Limitation: Kronecker + SiLU Gates
-
-Testing on Mistral-7B (a production dense model with SwiGLU activations) revealed a fundamental limitation:
-
-| Component | Kronecker 100× | Why it fails |
-|---|---|---|
-| Down projection (w2) | ⚠️ R² ≈ 0 | Weight std too small (0.003) for 100× |
-| Attention QKV+O | ⚠️ R² ≈ 0 | Same issue |
-| **Gate projection (w1)** | **❌ COS=0.04** | **Kronecker forces row co-linearity; SiLU needs diverse directions** |
-| **Up projection (w3)** | **❌ COS=0.04** | **Same structural mismatch** |
-
-**Root cause:** Kronecker r=1 forces all rows within a block to be co-linear (same direction, different magnitudes). Each gate neuron in SwiGLU needs to detect a **different pattern** in the input — requiring rows to point in independent directions. Block SVD analysis confirmed: r=1 captures only **33.5%** of intra-block variance.
-
-This is not a bug — it is a **mathematical property**: Kronecker decomposition assumes correlated block structure, but SiLU gates require diverse, independent row directions. The two are fundamentally incompatible at high compression ratios.
-
-### Solution: Hybrid SG-HF + Ternary Quantization
-
-For weights where Kronecker fails (SiLU gates, or any weight with std < 0.01), we use **ternary quantization {-1, 0, +1} + per-row scale**:
-
-| Method | Compression | R² | Sparsity | No training needed |
-|---|---|---|---|---|
-| Kronecker 100× | 100× | ~0 | 0% | Yes (with teacher init) |
-| **Ternary + scale** | **16×** | **0.80** | **43%** | **Yes (analytical)** |
-
-Why ternary works: the quantization error is **element-independent** (each weight is individually ±1 or 0), unlike Kronecker's co-linearity error. SiLU tolerates independent noise much better than structured distortion.
-
-### Compression Strategy by Weight Type
-
-| Weight type | Std | Method | Compression | COS |
-|---|---|---|---|---|
-| MLP gate/up (w1/w3) | 0.003 | Ternary {-1,0,+1} + scale | 16× | 0.77 |
-| MLP down (w2) | 0.003 | Ternary {-1,0,+1} + scale | 16× | 0.77 |
-| Attention QKV+O | 0.003 | Ternary {-1,0,+1} + scale | 16× | 0.89 |
-| Embedding/output | 0.003 | Ternary {-1,0,+1} + scale | 16× | — |
-
-For models with larger weights (std > 0.01), Kronecker remains the better choice at 50–100×.
-
----
-
-## 3. MLA Integration: Solving the KV Cache
-
-### The Real Bottleneck
-
-SG-HF compresses weights, but the **KV cache** of transformers grows with context length. For a 70B model with 1M token context:
-
-| Component | Memory |
-|---|---|
-| Weights (FP16) | 140 GB |
-| KV cache (1M tokens) | 1.3 TB |
-| **Total** | **1.4 TB** |
-
-Even with SG-HF compressing weights to 350 MB, the KV cache remains prohibitive.
-
-### Multi-head Latent Attention (MLA)
-
-Introduced in DeepSeek-V2, MLA compresses the KV cache by storing a **latent code** per token instead of the full K and V vectors:
-
-| Metric | Standard Attention | With MLA |
-|---|---|---|
-| KV cache per token | 45 KB | 2.8 KB |
-| Compression factor | 1× | **16×** |
-| KV cache for 1M tokens | 45 GB | **2.8 GB** |
-
-MLA uses the same principle as SG-HF — store a compact representation, expand on-demand — but applied to the **activation** dimension instead of the weight dimension.
-
-### Combined Architecture
+Para pesos con std > 0.01 (modelos antiguos como GPT-2, capas especificas de modelos modernos):
 
 ```
-SG-HF + MLA:
-  ┌──────────────────────────────────────────────────┐
-  │ Ternary weights (1.7 GB) → MLP + Attention       │  16× weight compression
-  │ Latent code (2.8 KB/token) → generates K,V       │  16× cache compression
-  │ + MoE sparsity (2/8 experts active)               │  4× compute efficiency
-  │                                                  │
-  │ Result: 52B MoE model on consumer laptop           │
-  └──────────────────────────────────────────────────┘
+W = expandir_Kronecker(seed, bases)
 ```
+
+El seed es 50-400x mas chico que W. La expansion usa FFT + modulacion + Kronecker rank-1 por bloque.
+
+**Resultado:** 50-100x de compresion, COS > 0.9 en GPT-2.
+
+### 2.2 Ternario {-1, 0, +1}
+
+Para pesos con std < 0.01 (todos los LLMs modernos):
+
+```
+W[i,j] = mascara[i,j] * escala[i]
+mascara[i,j] in {-1, 0, +1}
+escala[i] = media(|W[i,j]| para elementos no cero de la fila i)
+```
+
+**Resultado:** 16x de compresion, COS 0.77 en Mistral-7B. No requiere entrenamiento ni datos.
+
+**Por que funciona:** Preserva el rango completo de la matriz. El error es independiente por elemento, no correlacionado, y la SiLU lo tolera como ruido benigno.
 
 ---
 
-## 4. Empirical Validation: Mistral-7B
+## 3. MSL: Multi-Scale Linear
 
-We compressed **all 226 linear weights** of Mistral-7B-v0.3 (dense, 7B params) using ternary {-1,0,+1} + per-row scale with fine-tuned scales.
+### 3.1 Arquitectura
 
-### Per-Component Quality
+Reemplaza la capa lineal densa `y = Wx + b` por:
 
-| Component | Average COS | Minimum COS | Sparsity |
-|---|---|---|---|
-| MLP output (gate×up×down) | **0.77** | 0.75 | 43% |
-| Attention Q projection | **0.89** | 0.79 | 43% |
-| Attention O projection | **0.89** | 0.84 | 43% |
+```
+y = (x @ V^T) * s @ U^T + b
+```
 
-### Size Comparison
+Donde:
+- U in R^{M x R}, V in R^{R x N}, s in R^{R}
+- R = suma de ranks de cada escala (ej: 8+16+32 = 56)
+- Cada escala captura un nivel de detalle distinto
 
-| Format | Size | Ratio |
-|---|---|---|
-| Original (FP32) | 26.00 GB | 1× |
-| Original (FP16) | 13.00 GB | 2× |
-| **Ternary compressed** | **1.67 GB** | **16×** |
+### 3.2 Truncamiento sin reentrenar
 
-### Scaling to MoE (GLM-5.2 class, ~52B)
+La propiedad clave: el modelo con todas las escalas (profesor) y el modelo con solo las primeras k escalas (alumno) son el MISMO modelo con diferente configuracion.
 
-| Component | Original FP32 | Compressed | Method |
-|---|---|---|---|
-| Gate+Up (8 experts) | 112 GB | 1.8 GB | Ternary 16× |
-| Down (8 experts) | 56 GB | 0.3 GB | Ternary 16× |
-| Attention (shared) | 8 GB | 0.04 GB | Ternary 16× |
-| Embeddings | 1 GB | 0.5 GB | FP16 |
-| **Total** | **177 GB** | **~2.6 GB** | **68× vs FP32** |
+```
+y = (x @ V_k^T) * s_k @ U_k^T + b    (k < R = alumno)
+y = (x @ V_R^T) * s_R @ U_R^T + b    (k = R = profesor)
+```
 
-With MLA (16× KV cache) + MoE sparsity (4× effective): **a 52B model runs on a laptop with 8 GB RAM.**
+**Resultado en modelo GPT (864K params):**
+- Profesor: loss 0.53
+- Alumno (7x mas chico): loss 0.53
+- Gap: 0.005 en loss
+
+### 3.3 Entrenamiento
+
+MSL se entrena con:
+- **Sorted SVD loss:** Fuerza s[0] > s[1] > ... > s[R] (primeras escalas mas importantes)
+- **Orthogonality loss:** Fuerza U^T U ≈ I y V V^T ≈ I (para que truncar sea optimo)
+- **L1 espectral:** Tiende a cero las componentes tardias (compresion natural)
+
+### 3.4 MSL-Deep: Factores con std grande para Kronecker
+
+Para aplicar Kronecker sobre los factores U y V de MSL (std ~0.01-0.1), se anade un bottleneck:
+
+```
+W = row_norms * U1_norm @ U2 @ diag(s) @ V2^T @ V1_norm^T * V_row_norms
+```
+
+Donde U1_norm in R^{M x k} tiene filas normalizadas a norma 1, con std ~ 1/sqrt(k).
+Para k=64: std ~ 0.125, suficiente para Kronecker.
 
 ---
 
-## 5. Implementation
-
-### Repository Structure
+## 4. Pipeline Completo: Destilacion + MSL + Kronecker
 
 ```
-sg_hf/
-  core.py           — FractalLinear (Kronecker seed generation)
-  mla.py            — Multi-head Latent Attention
-  demo.py           — MLP demos
-
-compress_mistral.py — Original SG-HF compressor
-fase2_comprimir_mistral.py — Ternary compressor for all layers
-fase4_finetune_escalas.py  — Scale fine-tuning
-fase6_validacion_final.py  — Full validation
-
-mistral_ternario_ft/ — Compressed weights (226 files, 1.67 GB total)
-```
-
-### Usage
-
-```python
-# Load a ternary-compressed weight
-data = torch.load('mistral_ternario_ft/layers_0_feed_forward_w1_weight.pt')
-W = data['mask'] * data['scale'].unsqueeze(1)  # (14336, 4096)
-
-# Forward
-gate = F.silu(x @ W.T)
+Modelo pre-entrenado (teacher, 1B+ params)
+       |
+       v  Destilacion capa por capa o por logits
+  MSL Student (U, s, V entrenados para imitar al teacher)
+       |
+       v  Compresion de factores
+  Kronecker sobre U1_norm y V1_norm
+  Ternario sobre U2, s, V2 (son chicos, no importa)
+       |
+       v  Distribucion
+  Seed: factores Kronecker + matrices nucleo + normas de fila
+  Tamano tipico: ~20-50 MB para un modelo equivalente a 1B
+       |
+       v  Inferencia
+  1. Generar U1, V1 desde seed (Kronecker expansion)
+  2. Reconstruir factores (U1 @ U2, V2 @ V1)
+  3. Forward MSL normal
+  4. Truncar escalas si se necesita mas velocidad
 ```
 
 ---
 
-## 6. Lessons Learned
+## 5. Resultados Experimentales
 
-### What Works
+### 5.1 MSL en MNIST (MLP 784-512-256-10)
 
-- **Kronecker on large weights (std > 0.01):** 50–100× compression, near-lossless. Works for older models (GPT-2, MNIST MLP).
-- **Ternary on small weights (std < 0.01):** 16× compression, R²=0.80, zero training. Works universally.
-- **MLA for KV cache:** 16× compression, orthogonal to weight compression.
+| Modo | Compresion | Accuracy |
+|------|-----------|----------|
+| Profesor | 3.6x | 97.74% |
+| Alumno (k=2) | 7.1x | 97.45% |
+| Alumno (k=1) | 21.3x | 94.88% |
+| Gap alumno-profesor | - | 2.86pp |
 
-### What Does Not Work
+### 5.2 MSL en GPT chico (864K params, hidden=128, 4 layers)
 
-- **Kronecker on SiLU gates:** Structural mismatch. Kronecker forces row co-linearity; gates need row diversity. At 100×, COS = 0.04 (unusable).
-- **Kronecker on weights with std < 0.01:** The quantization noise at 100× exceeds the signal. R² ≈ 0 regardless of component type.
-- **Output distillation (training for COS):** The MLP output magnitude is tiny (~0.0001 at realistic input scales), so MSE loss is at numerical floor. Cosine similarity loss fixes this but adds training complexity.
+| Modo | Compresion | Loss | PPL |
+|------|-----------|------|-----|
+| Profesor | 1.0x | 0.529 | 1.70 |
+| Alumno (k=2) | 2.4x | 0.531 | 1.70 |
+| Alumno (k=1) | 7.1x | 0.535 | 1.71 |
+| Gap alumno-profesor | - | 0.006 | 0.01 |
 
-### The Real Tradeoff
+### 5.3 SG-HF Ternario en Mistral-7B
 
-Compression method choice depends on weight statistics, not model architecture:
+| Componente | COS | Compresion |
+|-----------|-----|-----------|
+| MLP output | 0.77 | 16x |
+| Attention Q | 0.89 | 16x |
+| Attention O | 0.89 | 16x |
 
-```
-if std(weight) > 0.01:
-    Use Kronecker (SG-HF) → 50-100×
-else:
-    Use Ternary → 16×
-    # OR: Use Kronecker at lower compression (10-20×)
-```
+### 5.4 Limites del post-hoc en Mistral-7B
 
----
-
-## 7. Conclusion
-
-SG-HF is not a silver bullet — it has a discovered, documented limitation with SiLU-gated projections at high compression ratios. **But that limitation is solvable.**
-
-The hybrid system (Kronecker where it works, ternary where it doesn't) delivers:
-
-- **16× compression on all modern LLM weights** (validated on Mistral-7B)
-- **0.77 MLP COS, 0.89 attention COS** — functionally lossless for most tasks
-- **43% weight sparsity** — reduced compute
-- **Zero training data required** — purely analytical quantization
-- **MoE scaling:** 52B model → ~2.6 GB
-- **With MLA + MoE sparsity:** entire model runs on consumer laptop
-
-The method is architecture-agnostic: it applies to dense, MoE, and SSM-based models equally.
+| Tecnica | Compresion | COS | Funciona? |
+|---------|-----------|-----|-----------|
+| Kronecker rank-1 | 50x | 0.04 | NO (std 0.003) |
+| SVD truncado rank 224 | 2x | 0.52 | NO (espectro plano) |
+| Kronecker sobre U de SVD | 50x | 0.004 | NO (std U = 0.008) |
+| Normalizacion filas + Kronecker | 50x | 0.01 | NO (sin estructura bloques) |
+| Ternario {-1,0,+1} | 16x | 0.77 | SI |
 
 ---
 
-*For more information, code, or reproduction: see sg_hf/ directory.*
+## 6. Lecciones Aprendidas
 
-*Repository: github.com/gentle-ai/sg-hf (future)*
+### 6.1 No existe compresion post-hoc >16x para LLMs modernos
+
+Los pesos de Mistral, Llama, Qwen y DeepSeek tienen std ~0.003 y espectro plano. Esto no es un accidente: es consecuencia de AdamW + weight decay + LayerNorm. No hay estructura oculta que explotar.
+
+### 6.2 MSL funciona cuando se entrena desde cero
+
+La truncabilidad sin reentrenar es real (gap ~0 en modelos chicos). El costo es que el modelo debe entrenarse con MSL desde el inicio, no aplicarse post-hoc.
+
+### 6.3 El pipeline MSL + destilacion + Kronecker es viable pero caro
+
+Requiere:
+- Datos de destilacion masivos (100B+ tokens)
+- GPU con 16GB+ VRAM (P100, V100, A100)
+- ~$10K-50K en computo para escalar a 7B
+
+### 6.4 Para uso practico hoy
+
+Usar GGUF Q4 o Q3 de cualquier modelo en HuggingFace. Nuestros inventos son investigacion, no producto listo.
+
+---
+
+## 7. Proximos Pasos
+
+1. **Demostrar pipeline completo en modelo ~300M eq.** usando Kaggle (P100 16GB, 9h)
+2. **Publicar whitepaper** con resultados y codigo abierto
+3. **Colaborar** con quien tenga recursos para escalar a 7B+
+
+---
+
+## 8. Repositorio y Codigo
+
+- `sg_hf/msl_v2.py` - Implementacion de MSL
+- `sg_hf/msl_transformer.py` - Transformer con MSL
+- `msl_demo_v2.py` - Demo MNIST
+- `msl_demo_transformer.py` - Demo GPT chico
+- `msl_factorize_mistral.py` - Factorizacion de Mistral-7B
+- `test_distill_msl_mistral.py` - Destilacion a MSL
+- `distill_msl_compressible.py` - Destilacion con regularizacion
+- `train_msl_final.py` - Entrenamiento MSL desde cero
+
+---
+
+*Julio 2026 - Proyecto ia-2027*

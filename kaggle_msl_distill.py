@@ -1,21 +1,19 @@
 """
 Kaggle Notebook: MSL Distillation - TinyLlama-1.1B -> MSL Student
-===============================================================
+=================================================================
 
 INSTRUCCIONES:
 1. Crear notebook en kaggle.com
 2. Settings -> Accelerator -> GPU P100
 3. Settings -> Internet -> ON
-4. Copiar TODO este archivo en la primera celda
-5. Run All
+4. En la PRIMERA celda, pegar y ejecutar:
+   !git clone https://github.com/biggs-100/msl-sghf.git
+5. En la SEGUNDA celda, pegar y ejecutar:
+   !python msl-sghf/kaggle_msl_distill.py
 
-Tiempo estimado: ~4-6 horas
+Tiempo estimado: ~4-5 horas
 """
 
-# %% (1) Instalar dependencias (si hiciera falta)
-# Kaggle ya tiene transformers y torch. No instalar nada.
-
-# %% (2) Imports
 import os, sys, time, math, gc, json
 import torch
 import torch.nn as nn
@@ -23,6 +21,11 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import numpy as np
+
+# Si estamos en Kaggle, cambiamos al directorio del repo
+if os.path.exists("msl-sghf"):
+    os.chdir("msl-sghf")
+    sys.path.insert(0, ".")
 
 DEVICE = "cuda"
 if torch.cuda.is_available():
